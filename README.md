@@ -1,2 +1,2 @@
-# tabulator
-Grid editing views based on Tabulator
+# tabulator_plus
+Grid editing views based on Tabulator with additional features

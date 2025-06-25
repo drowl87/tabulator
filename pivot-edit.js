@@ -1042,7 +1042,7 @@ const get_rows = async (table_id, viewname, config, body, extraArgs) => {
 };
 
 module.exports = {
-  name: "Tabulator Pivot Edit",
+  name: "Tabulator Plus Pivot Edit",
   display_state_form: false,
   get_state_fields,
   configuration_workflow,

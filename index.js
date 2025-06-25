@@ -2284,7 +2284,7 @@ module.exports = {
     },
   ],
   sc_plugin_api_version: 1,
-  plugin_name: "tabulator",
+  plugin_name: "tabulator_plus",
   configuration_workflow,
   fieldviews: features.ellipsize
     ? undefined
@@ -2311,7 +2311,7 @@ module.exports = {
       }),
   viewtemplates: () => [
     {
-      name: "Tabulator",
+      name: "Tabulator Plus",
       display_state_form: false,
       get_state_fields,
       configuration_workflow: view_configuration_workflow,
