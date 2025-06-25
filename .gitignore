@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Exclude symlinks from other projects that have been installed via npm in Saltcorn
+plugin_packages/

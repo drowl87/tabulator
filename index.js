@@ -542,6 +542,9 @@ const view_configuration_workflow = (req) =>
               .map((f) => f.field),
           ]);
           const roles = await User.get_roles();
+          const integer_fields = fields
+            .filter((f) => f.type?.name === "Integer")
+            .map((f) => f.name);
           let tree_field_options = [];
           //self join
           for (const field of fields) {
@@ -766,6 +769,18 @@ const view_configuration_workflow = (req) =>
                 label: "Movable rows",
                 type: "Bool",
                 tab: "Layout",
+              },
+              {
+                name: "movable_rows_sort_field",
+                label: "Movable rows sort field",
+                sublabel:
+                  "The integer field that stores the row order. This is updated when rows are moved in the grid.",
+                type: "String",
+                tab: "Layout",
+                showIf: { movable_rows: true },
+                attributes: {
+                  options: integer_fields,
+                },
               },
               {
                 name: "vert_col_headers",
@@ -1104,6 +1119,7 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
     pagination_size,
     movable_cols,
     movable_rows,
+    movable_rows_sort_field,
     history,
     persistent,
     groupBy,
@@ -1144,6 +1160,11 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
       groupBy1 = `${groupBy1}_${groupField?.attributes?.summary_field || "id"}`;
     }
   }
+
+  const _def_order_field = movable_rows_sort_field || def_order_field;
+  const _def_order_descending = movable_rows_sort_field
+    ? false
+    : !!def_order_descending;
 
   let rows = [];
   if (!ajax_load || hide_null_columns)
@@ -1445,11 +1466,11 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
             : ""
         }
         ${
-          def_order_field && !groupBy1
+          _def_order_field && !groupBy1
             ? `initialSort:[
             
-          {column:"${def_order_field}", dir:"${
-                def_order_descending ? "desc" : "asc"
+          {column:"${_def_order_field}", dir:"${
+                _def_order_descending ? "desc" : "asc"
               }"},
         ],`
             : ""
@@ -1460,6 +1481,24 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
           else return response
         },
     });
+    ${
+      movable_rows && movable_rows_sort_field
+        ? `
+    window.tabulator_table_${rndid}.on("rowMoved", function(row){
+      const rows = window.tabulator_table_${rndid}.getRows();
+      const order = rows.map((r, ix) => ({id: r.getData().id, order: ix}));
+      $.ajax({
+        type: "POST",
+        url: "/view/${viewname}/update_row_order",
+        data: { order: JSON.stringify(order), sort_field: "${movable_rows_sort_field}" },
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        }
+      });
+    });
+    `
+        : ""
+    }
     const save_row_from_cell= gen_save_row_from_cell(${JSON.stringify({
       confirm_edits,
       hasCalculated,
@@ -1607,8 +1646,8 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
         fields,
         columns,
         rndid,
-        def_order_field,
-        def_order_descending,
+        _def_order_field,
+        _def_order_descending,
         default_group_by
       ),
     selected_rows_action &&
@@ -1995,6 +2034,23 @@ const get_rows = async (
   } else return { json: rows };
 };
 
+const update_row_order = async (
+  table_id,
+  viewname,
+  config,
+  body,
+  { req, res }
+) => {
+  const { order, sort_field } = body;
+  if (!sort_field) return { json: { error: "Sort field not specified" } };
+  const table = await Table.findOne({ id: table_id });
+  const parsed_order = JSON.parse(order);
+  for (const item of parsed_order) {
+    await table.updateRow({ [sort_field]: item.order }, item.id, req.user);
+  }
+  return { json: { success: "ok" } };
+};
+
 const run_action = async (
   table_id,
   viewname,
@@ -2367,6 +2423,7 @@ module.exports = {
         run_selected_rows_action,
         add_preset,
         delete_preset,
+        update_row_order,
       },
       queries: ({ table_id, req }) => ({
         async get_rows_query(where, joinFields, aggregations, q) {
