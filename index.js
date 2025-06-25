@@ -762,6 +762,12 @@ const view_configuration_workflow = (req) =>
                 tab: "Layout",
               },
               {
+                name: "movable_rows",
+                label: "Movable rows",
+                type: "Bool",
+                tab: "Layout",
+              },
+              {
                 name: "vert_col_headers",
                 label: "Vertical column headers",
                 type: "Bool",
@@ -1097,6 +1103,7 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
     pagination_enabled,
     pagination_size,
     movable_cols,
+    movable_rows,
     history,
     persistent,
     groupBy,
@@ -1405,6 +1412,7 @@ const run = async (table_id, viewname, cfg, state, extraArgs, queriesObj) => {
         persistence:${!!persistent}, 
         persistenceID:"tabview_${viewname}",
         movableColumns: ${!!movable_cols},
+        movableRows: ${!!movable_rows},
         downloadEncoder: sc_tab_downloadEncoder,
         ${rowContextMenu ? `rowContextMenu: ${rowContextMenu},` : ""}
         history: ${!!history},
@@ -2231,7 +2239,7 @@ const createBasicView = async ({
 
   if (template_view && all_views_created.Edit) {
     copy_cfg(
-      "fit responsiveLayout hideColsBtn hide_null_columns addRowBtn selectable remove_unselected_btn download_csv header_filters pagination_enabled pagination_size movable_cols history persistent dropdown_frozen vert_col_headers reset_persistent_btn def_order_descending column_visibility_presets presets min_role_preset_edit tree_field selected_rows_action group_true_label group_false_label group_null_label group_order_desc header_wrap override_stylesheet ajax_load confirm_edits disable_edit_if row_color_formula select_range height"
+      "fit responsiveLayout hideColsBtn hide_null_columns addRowBtn selectable remove_unselected_btn download_csv header_filters pagination_enabled pagination_size movable_cols movable_rows history persistent dropdown_frozen vert_col_headers reset_persistent_btn def_order_descending column_visibility_presets presets min_role_preset_edit tree_field selected_rows_action group_true_label group_false_label group_null_label group_order_desc header_wrap override_stylesheet ajax_load confirm_edits disable_edit_if row_color_formula select_range height"
     );
   }
   return configuration;
